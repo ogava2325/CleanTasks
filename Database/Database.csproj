@@ -1,0 +1,39 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+    <PropertyGroup>
+        <TargetFramework>net8.0</TargetFramework>
+        <ImplicitUsings>enable</ImplicitUsings>
+        <Nullable>enable</Nullable>
+    </PropertyGroup>
+
+    <ItemGroup>
+      <PackageReference Include="Dapper" Version="2.1.35" />
+      <PackageReference Include="dbup-sqlserver" Version="6.0.0" />
+    </ItemGroup>
+
+    <ItemGroup>
+      <None Remove="Scripts\Script1 - Create projects table.sql" />
+    </ItemGroup>
+
+    <ItemGroup>
+      <None Remove="Scripts\Script8 - Create States table.sql" />
+      <EmbeddedResource Include="Scripts\Script8 - Create States table.sql" />
+      <None Remove="Scripts\Script7 - Create Activity table.sql" />
+      <EmbeddedResource Include="Scripts\Script7 - Create Activity table.sql" />
+      <None Remove="Scripts\Script6 - Create Comments table.sql" />
+      <EmbeddedResource Include="Scripts\Script6 - Create Comments table.sql" />
+      <None Remove="Scripts\Script5 - Create Cards table.sql" />
+      <EmbeddedResource Include="Scripts\Script5 - Create Cards table.sql" />
+      <None Remove="Scripts\Script4 - Create Users_Projects table.sql" />
+      <EmbeddedResource Include="Scripts\Script4 - Create Users_Projects table.sql" />
+      <None Remove="Scripts\Script3 - Create Roles table.sql" />
+      <EmbeddedResource Include="Scripts\Script3 - Create Roles table.sql" />
+      <None Remove="Scripts\Script2 - Create Users table.sql" />
+      <EmbeddedResource Include="Scripts\Script2 - Create Users table.sql" />
+    </ItemGroup>
+
+    <ItemGroup>
+      <EmbeddedResource Include="Scripts\Script1 - Create Projects table.sql" />
+    </ItemGroup>
+
+</Project>
