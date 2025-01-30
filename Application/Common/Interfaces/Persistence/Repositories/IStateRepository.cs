@@ -1,8 +1,7 @@
 using Application.Common.Interfaces.Persistence.Base;
 using Domain.Entities;
-using Domain.Enums;
 
-namespace Application.Common.Interfaces.Persistence;
+namespace Application.Common.Interfaces.Persistence.Repositories;
 
 public interface IStateRepository : IGenericRepository<State, Guid>
 {

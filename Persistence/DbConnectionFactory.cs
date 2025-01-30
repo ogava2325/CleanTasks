@@ -6,18 +6,11 @@ using Microsoft.Data.SqlClient;
 
 namespace Persistence;
 
-public class DbConnectionFactory : IDbConnectionFactory
+public class DbConnectionFactory(string connectionString) : IDbConnectionFactory
 {
-    private readonly string _connectionString;
-
-    public DbConnectionFactory(string connectionString)
+    public IDbConnection CreateConnection(CancellationToken token = default)
     {
-        _connectionString = connectionString;
-    }
-
-    public IDbConnection CreateConnection()
-    {
-        var connection = new SqlConnection(_connectionString);
+        var connection = new SqlConnection(connectionString);
         connection.Open();
 
         return connection;

@@ -4,5 +4,5 @@ namespace Application.Common.Interfaces.Persistence.Base;
 
 public interface IDbConnectionFactory
 {
-    IDbConnection CreateConnection();
+    IDbConnection CreateConnection(CancellationToken token = default);
 }

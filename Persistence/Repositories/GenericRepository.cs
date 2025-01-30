@@ -7,46 +7,40 @@ using TableAttribute = System.ComponentModel.DataAnnotations.Schema.TableAttribu
 
 namespace Persistence.Repositories;
 
-public class GenericRepository<T, TId> : IGenericRepository<T, TId> where T : class
+public class GenericRepository<T, TId>(IDbConnectionFactory dbConnectionFactory) : IGenericRepository<T, TId>
+    where T : class
 {
-    private readonly IDbConnectionFactory _dbConnectionFactory;
-
-    public GenericRepository(IDbConnectionFactory dbConnectionFactory)
-    {
-        _dbConnectionFactory = dbConnectionFactory;
-    }
-
     public async Task<IEnumerable<T>> GetAllAsync()
     {
-        using var connection = _dbConnectionFactory.CreateConnection();
+        using var connection = dbConnectionFactory.CreateConnection();
         
         return await connection.GetListAsync<T>();
     }
 
     public async Task<T?> GetByIdAsync(TId id)
     {
-        using var connection = _dbConnectionFactory.CreateConnection();
+        using var connection = dbConnectionFactory.CreateConnection();
 
         return await connection.GetAsync<T>(id);
     }
 
     public async Task AddAsync(T entity)
     {
-        using var connection = _dbConnectionFactory.CreateConnection();
+        using var connection = dbConnectionFactory.CreateConnection();
 
         await connection.InsertAsync<TId, T>(entity);
     }
 
     public async Task UpdateAsync(T entity)
     {
-        using var connection = _dbConnectionFactory.CreateConnection();
+        using var connection = dbConnectionFactory.CreateConnection();
         
         await connection.UpdateAsync(entity);
     }
 
     public async Task DeleteAsync(TId id)
     {
-        using var connection = _dbConnectionFactory.CreateConnection();
+        using var connection = dbConnectionFactory.CreateConnection();
         
         await connection.DeleteAsync<T>(id);
     }
