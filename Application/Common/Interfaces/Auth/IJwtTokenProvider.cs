@@ -4,5 +4,5 @@ namespace Application.Common.Interfaces.Auth;
 
 public interface IJwtTokenProvider
 {
-    string GenerateToken(User user);
+    Task<string> GenerateTokenAsync(User user);
 }

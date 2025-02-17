@@ -28,6 +28,6 @@ public class LoginUserCommandHandler(
             throw new UnauthorizedAccessException("Invalid credentials provided.");
         }
 
-        return jwtTokenProvider.GenerateToken(user);
+        return await jwtTokenProvider.GenerateTokenAsync(user);
     }
 }

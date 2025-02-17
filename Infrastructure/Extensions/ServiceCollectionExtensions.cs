@@ -31,12 +31,17 @@ public static class ServiceCollectionExtensions
                     ValidateIssuerSigningKey = true,
                     IssuerSigningKey = new SymmetricSecurityKey(Encoding.ASCII.GetBytes(secretKey))
                 };
-
-                options.Events = new JwtBearerEvents()
+                
+                // Extract the token from the Authorization header
+                options.Events = new JwtBearerEvents
                 {
                     OnMessageReceived = context =>
                     {
-                        context.Token = context.Request.Cookies["tasty-cookies"];
+                        var authHeader = context.Request.Headers["Authorization"].FirstOrDefault();
+                        if (!string.IsNullOrEmpty(authHeader) && authHeader.StartsWith("Bearer "))
+                        {
+                            context.Token = authHeader.Substring("Bearer ".Length).Trim();
+                        }
                         return Task.CompletedTask;
                     }
                 };
@@ -47,6 +52,5 @@ public static class ServiceCollectionExtensions
         services.AddScoped<IPasswordHasher, PasswordHasher>();
         
         return services;
-        
     }
 }
