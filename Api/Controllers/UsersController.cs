@@ -1,3 +1,4 @@
+using System.Security.Claims;
 using Application.Common.Dtos;
 using Application.Common.Interfaces.Persistence;
 using Application.Common.Interfaces.Persistence.Repositories;
@@ -6,8 +7,10 @@ using Application.Features.User.Commands.RegisterUser;
 using Application.Features.User.Queries.GetAllUsers;
 using Domain.Entities;
 using MediatR;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.IdentityModel.JsonWebTokens;
 
 namespace Api.Controllers
 {
@@ -16,9 +19,11 @@ namespace Api.Controllers
     public class UsersController : ControllerBase
     {
         private readonly IMediator _mediator;
-        public UsersController(IMediator mediator)
+        private readonly IUserRepository _userRepository;
+        public UsersController(IMediator mediator, IUserRepository userRepository)
         {
             _mediator = mediator;
+            _userRepository = userRepository;
         }
 
         // GET api/<UsersController>
@@ -45,15 +50,28 @@ namespace Api.Controllers
         {
             var token = await _mediator.Send(userCommand);
             
-            HttpContext.Response.Cookies.Append("tasty-cookies", token, new CookieOptions
-            {
-                HttpOnly = true,
-                SameSite = SameSiteMode.None,
-                Secure = true,
-                Expires = DateTimeOffset.Now.AddHours(1),
-            });
-            
             return Ok(token);
+        }
+        
+        [HttpGet("roles")]
+        [Authorize]
+        public async Task<IActionResult> GetUserRoles()
+        {
+            var userId = GetUserId();
+
+            var roles = await _userRepository.GetRolesAsync(userId);
+
+            if (!roles.Any())
+            {
+                return NotFound(new { message = "No roles found for the user in this project" });
+            }
+
+            return Ok(new { UserId = userId, Roles = roles });
+        }
+        
+        private Guid GetUserId()
+        {
+            return Guid.Parse(User.FindFirst(ClaimTypes.NameIdentifier).Value);
         }
     }
 }
