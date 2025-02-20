@@ -17,29 +17,42 @@ public class ProjectRepository(IDbConnectionFactory dbConnectionFactory)
         using var connection = _dbConnectionFactory.CreateConnection();
 
         var query = """
-                                SELECT * FROM Projects p
-                                INNER JOIN Users_Projects up ON p.Id = up.ProjectId
-                                WHERE up.UserId = @UserId
+                    SELECT * FROM Projects p
+                    INNER JOIN Users_Projects up ON p.Id = up.ProjectId
+                    WHERE up.UserId = @UserId
                     """;
 
         return await connection.QueryAsync<Project>(query, new { UserId = userId });
     }
 
-    public async Task CreateProjectAsync(Project project, Guid userId)
+    public async Task CreateProjectAsync(Project project, Guid userId, Guid roleId)
     {
         using var connection = _dbConnectionFactory.CreateConnection();
 
-        var query = """
-                    INSERT INTO Projects (Id, Title, Description, CreatedAtUtc, CreatedBy) 
-                    VALUES (@Id, @Title, @Description, @CreatedAtUtc, @CreateBy)
-                    """;
+        const string insertIntoProjectsQuery = """
+                                               INSERT INTO Projects (Title, Description, CreatedAtUtc, CreatedBy) 
+                                               OUTPUT INSERTED.Id
+                                               VALUES (@Title, @Description, @CreatedAtUtc, @CreatedBy)
+                                               """;
 
-        connection.ExecuteAsync(query,
-            new
-            {
-                Id = userId, Title = project.Title, Description = project.Description,
-                CreatedAtUtc = project.CreatedAtUtc, CreatedBy = project.CreatedBy
-            });
+        const string insertIntoUsersProjectsQuery = """
+                                                    INSERT INTO Users_Projects (UserId, ProjectId, RoleId)
+                                                    VALUES (@UserId, @ProjectId, @RoleId);
+                                                    """;
 
+        var projectId = await connection.ExecuteScalarAsync<Guid>(insertIntoProjectsQuery, new
+        {
+            Title = project.Title,
+            Description = project.Description,
+            CreatedAtUtc = DateTimeOffset.UtcNow,
+            CreatedBy = userId.ToString(),
+        });
+
+        await connection.ExecuteAsync(insertIntoUsersProjectsQuery, new
+        {
+            ProjectId = projectId,
+            UserId = userId,
+            RoleId = roleId,
+        });
     }
 }
