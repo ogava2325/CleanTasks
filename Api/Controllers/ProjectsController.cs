@@ -1,5 +1,6 @@
 using Application.Common.Dtos;
 using Application.Features.Project.Commands.CreateProject;
+using Application.Features.Project.Commands.DeleteProject;
 using Application.Features.Project.Queries.GetProjectsByUserId;
 using Domain.Entities;
 using MediatR;
@@ -36,6 +37,15 @@ namespace Api.Controllers
             var project = await _mediator.Send(command);
 
             return Ok(project);
+        }
+        
+        // DELETE api/<ProjectsController>/5
+        [HttpDelete("{id}")]
+        public async Task<IActionResult> Delete(Guid id)
+        {
+            var command = new DeleteProjectCommand(id);
+            await _mediator.Send(command);
+            return NoContent();
         }
     }
 }
