@@ -13,7 +13,7 @@ public class CreateProjectCommandHandler(
     {
         var project = mapper.Map<Domain.Entities.Project>(request);
 
-        await projectRepository.AddAsync(project);
+        await projectRepository.CreateProjectAsync(project, request.UserId, request.RoleId);
         
         return Unit.Value;
     }
