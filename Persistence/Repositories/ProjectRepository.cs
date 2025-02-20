@@ -29,30 +29,50 @@ public class ProjectRepository(IDbConnectionFactory dbConnectionFactory)
     {
         using var connection = _dbConnectionFactory.CreateConnection();
 
-        const string insertIntoProjectsQuery = """
-                                               INSERT INTO Projects (Title, Description, CreatedAtUtc, CreatedBy) 
-                                               OUTPUT INSERTED.Id
-                                               VALUES (@Title, @Description, @CreatedAtUtc, @CreatedBy)
-                                               """;
+        using var transaction = connection.BeginTransaction();
 
-        const string insertIntoUsersProjectsQuery = """
-                                                    INSERT INTO Users_Projects (UserId, ProjectId, RoleId)
-                                                    VALUES (@UserId, @ProjectId, @RoleId);
-                                                    """;
-
-        var projectId = await connection.ExecuteScalarAsync<Guid>(insertIntoProjectsQuery, new
+        try
         {
-            Title = project.Title,
-            Description = project.Description,
-            CreatedAtUtc = DateTimeOffset.UtcNow,
-            CreatedBy = userId.ToString(),
-        });
+            const string insertIntoProjectsQuery = """
+                                                   INSERT INTO Projects (Title, Description, CreatedAtUtc, CreatedBy) 
+                                                   OUTPUT INSERTED.Id
+                                                   VALUES (@Title, @Description, @CreatedAtUtc, @CreatedBy)
+                                                   """;
 
-        await connection.ExecuteAsync(insertIntoUsersProjectsQuery, new
+            const string insertIntoUsersProjectsQuery = """
+                                                        INSERT INTO Users_Projects (UserId, ProjectId, RoleId)
+                                                        VALUES (@UserId, @ProjectId, @RoleId);
+                                                        """;
+
+            var projectId = await connection.ExecuteScalarAsync<Guid>(
+                insertIntoProjectsQuery,
+                new
+                {
+                    Title = project.Title,
+                    Description = project.Description,
+                    CreatedAtUtc = DateTimeOffset.UtcNow,
+                    CreatedBy = userId.ToString(),
+                },
+                transaction
+            );
+
+            await connection.ExecuteAsync(
+                insertIntoUsersProjectsQuery,
+                new
+                {
+                    ProjectId = projectId,
+                    UserId = userId,
+                    RoleId = roleId,
+                },
+                transaction
+            );
+
+            transaction.Commit();
+        }
+        catch (Exception exception)
         {
-            ProjectId = projectId,
-            UserId = userId,
-            RoleId = roleId,
-        });
+            transaction.Rollback();
+            Console.WriteLine($"Error occurred while creating project: {exception.Message}");
+        }
     }
 }
