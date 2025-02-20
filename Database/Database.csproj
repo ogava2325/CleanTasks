@@ -30,6 +30,8 @@
       <EmbeddedResource Include="Scripts\Script3 - Create Roles table.sql" />
       <None Remove="Scripts\Script2 - Create Users table.sql" />
       <EmbeddedResource Include="Scripts\Script2 - Create Users table.sql" />
+      <None Remove="Scripts\Script9 - Create Cascade delete for project.sql" />
+      <EmbeddedResource Include="Scripts\Script9 - Create Cascade delete for project.sql" />
     </ItemGroup>
 
     <ItemGroup>
