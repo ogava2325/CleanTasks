@@ -25,7 +25,7 @@ public class GenericRepository<T, TId>(IDbConnectionFactory dbConnectionFactory)
     }
 
     public async Task AddAsync(T entity)
-    {
+     {
         using var connection = dbConnectionFactory.CreateConnection();
 
         await connection.InsertAsync<TId, T>(entity);
