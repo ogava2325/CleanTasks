@@ -1,13 +1,12 @@
 using System.ComponentModel.DataAnnotations.Schema;
+using System.Security.Principal;
 using Domain.Common;
 
 namespace Domain.Entities;
-
-[Table("Cards")]
-public class Card : BaseAuditableEntity
+ 
+[Table("Columns")]
+public class Column : BaseAuditableEntity
 {
     public string Title { get; set; }
-    public Guid ColumnId { get; set; }
-    
-    public int RowIndex { get; set; }
+    public Guid ProjectId { get; set; }
 }

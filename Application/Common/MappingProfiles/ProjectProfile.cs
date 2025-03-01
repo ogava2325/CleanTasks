@@ -12,5 +12,7 @@ public class ProjectProfile : Profile
         CreateMap<CreateProjectCommand, Project>();
         
         CreateMap<Project, ProjectDto>().ReverseMap();
+        
+        CreateMap<Card, CardDto>().ReverseMap();
     }
 }

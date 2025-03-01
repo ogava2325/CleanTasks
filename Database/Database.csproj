@@ -7,35 +7,36 @@
     </PropertyGroup>
 
     <ItemGroup>
+      <PackageReference Include="BCrypt.Net-Next" Version="4.0.3" />
       <PackageReference Include="Dapper" Version="2.1.35" />
       <PackageReference Include="dbup-sqlserver" Version="6.0.0" />
     </ItemGroup>
 
     <ItemGroup>
-      <None Remove="Scripts\Script1 - Create projects table.sql" />
+      <None Remove="Scripts\001 - Create Projects table.sql" />
+      <EmbeddedResource Include="Scripts\001 - Create Projects table.sql" />
+      <None Remove="Scripts\002 - Create Users table.sql" />
+      <EmbeddedResource Include="Scripts\002 - Create Users table.sql" />
+      <None Remove="Scripts\003 - Create Roles table.sql" />
+      <EmbeddedResource Include="Scripts\003 - Create Roles table.sql" />
+      <None Remove="Scripts\004 - Create Users_Projects table.sql" />
+      <EmbeddedResource Include="Scripts\004 - Create Users_Projects table.sql" />
+      <None Remove="Scripts\005 - Create Cards table.sql" />
+      <EmbeddedResource Include="Scripts\005 - Create Cards table.sql" />
+      <None Remove="Scripts\006 - Create Comments table.sql" />
+      <EmbeddedResource Include="Scripts\006 - Create Comments table.sql" />
+      <None Remove="Scripts\007 - Create Activity table.sql" />
+      <EmbeddedResource Include="Scripts\007 - Create Activity table.sql" />
+      <None Remove="Scripts\008 - Create States table.sql" />
+      <EmbeddedResource Include="Scripts\008 - Create States table.sql" />
+      <None Remove="Scripts\009 - Create Cascade delete for project.sql" />
+      <EmbeddedResource Include="Scripts\009 - Create Cascade delete for project.sql" />
+      <None Remove="Scripts\010 - Create Columns table.sql" />
+      <EmbeddedResource Include="Scripts\010 - Create Columns table.sql" />
     </ItemGroup>
 
     <ItemGroup>
-      <None Remove="Scripts\Script8 - Create States table.sql" />
-      <EmbeddedResource Include="Scripts\Script8 - Create States table.sql" />
-      <None Remove="Scripts\Script7 - Create Activity table.sql" />
-      <EmbeddedResource Include="Scripts\Script7 - Create Activity table.sql" />
-      <None Remove="Scripts\Script6 - Create Comments table.sql" />
-      <EmbeddedResource Include="Scripts\Script6 - Create Comments table.sql" />
-      <None Remove="Scripts\Script5 - Create Cards table.sql" />
-      <EmbeddedResource Include="Scripts\Script5 - Create Cards table.sql" />
-      <None Remove="Scripts\Script4 - Create Users_Projects table.sql" />
-      <EmbeddedResource Include="Scripts\Script4 - Create Users_Projects table.sql" />
-      <None Remove="Scripts\Script3 - Create Roles table.sql" />
-      <EmbeddedResource Include="Scripts\Script3 - Create Roles table.sql" />
-      <None Remove="Scripts\Script2 - Create Users table.sql" />
-      <EmbeddedResource Include="Scripts\Script2 - Create Users table.sql" />
-      <None Remove="Scripts\Script9 - Create Cascade delete for project.sql" />
-      <EmbeddedResource Include="Scripts\Script9 - Create Cascade delete for project.sql" />
+      <ProjectReference Include="..\Domain\Domain.csproj" />
     </ItemGroup>
-
-    <ItemGroup>
-      <EmbeddedResource Include="Scripts\Script1 - Create Projects table.sql" />
-    </ItemGroup>
-
+    
 </Project>

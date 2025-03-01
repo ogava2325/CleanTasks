@@ -7,9 +7,8 @@ namespace Domain.Entities;
 [Table("States")]
 public class State : BaseEntity
 {
+    public string Description { get; set; }
     public Status Status { get; set; }
     public Priority Priority { get; set; }
-    public int Row { get; set; }
-    public int Column { get; set; }
-    public Guid ProjectId { get; set; }
+    public Guid CardId { get; set; }
 }
