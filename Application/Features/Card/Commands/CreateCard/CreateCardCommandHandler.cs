@@ -7,16 +7,15 @@ namespace Application.Features.Card.Commands.CreateCard;
 public class CreateCardCommandHandler(
     IMapper mapper,
     ICardRepository cardRepository) 
-    : IRequestHandler<CreateCardCommand, Unit>
+    : IRequestHandler<CreateCardCommand, Guid>
 {
-    public async Task<Unit> Handle(CreateCardCommand request, CancellationToken cancellationToken)
+    public async Task<Guid> Handle(CreateCardCommand request, CancellationToken cancellationToken)
     {
         var card = mapper.Map<Domain.Entities.Card>(request);
+        
         card.CreatedAtUtc = DateTimeOffset.UtcNow;
         card.CreatedBy = "some user";
         
-        await cardRepository.AddAsync(card);
-        
-        return Unit.Value;
+        return await cardRepository.AddAsync(card);
     }
 }

@@ -1,8 +1,9 @@
 using Domain.Enums;
+using MediatR;
 
-namespace Application.Common.Dtos;
+namespace Application.Features.State.Commands.UpdateState;
 
-public class StateDto
+public class UpdateStateCommand : IRequest
 {
     public Guid Id { get; set; }
     public string Description { get; set; }

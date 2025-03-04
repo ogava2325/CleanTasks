@@ -1,8 +1,11 @@
+using System.Text.Json.Serialization;
 using Application;
 using Application.Extensions;
 using Database;
+using Domain.Enums;
 using Infrastructure;
 using Infrastructure.Extensions;
+using NuGet.Protocol;
 using Persistence.Extensions;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -13,7 +16,12 @@ builder.Services.AddInfrastructureServices(builder.Configuration);
 builder.Services.AddPersistenceServices(builder.Configuration);
 builder.Services.AddSingleton(_ => new DatabaseInitializer(builder.Configuration.GetConnectionString("DefaultConnection")!));
 
-builder.Services.AddControllers();
+builder.Services.AddControllers()
+    .AddJsonOptions(options =>
+    {
+        options.JsonSerializerOptions.Converters.Add(new JsonStringEnumConverter<Status>());
+        options.JsonSerializerOptions.Converters.Add(new JsonStringEnumConverter<Priority>());
+    });
 
 // Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle
 builder.Services.AddEndpointsApiExplorer();
