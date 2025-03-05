@@ -1,10 +1,10 @@
 using Domain.Enums;
+using MediatR;
 
-namespace Application.Common.Dtos;
+namespace Application.Features.State.Commands.CreateState;
 
-public class StateDto
+public class CreateStateCommand : IRequest<Unit>
 {
-    public Guid Id { get; set; }
     public string Description { get; set; }
     public Status Status { get; set; }
     public Priority Priority { get; set; }

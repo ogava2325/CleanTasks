@@ -6,8 +6,8 @@ namespace Application.Features.Card.Commands.UpdateCard;
 
 public class UpdateCardCommandHandler(
     IMapper mapper,
-    ICardRepository repository
-    ) : IRequestHandler<UpdateCardCommand>
+    ICardRepository repository) 
+    : IRequestHandler<UpdateCardCommand>
 {
     public async Task Handle(UpdateCardCommand request, CancellationToken cancellationToken)
     {
