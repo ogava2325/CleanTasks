@@ -22,6 +22,7 @@ public static class ServiceCollectionExtensions
         services.AddScoped(typeof(ICardRepository), typeof(CardRepository));
         services.AddScoped(typeof(IColumnRepository), typeof(ColumnRepository));
         services.AddScoped(typeof(IStateRepository), typeof(StateRepository));
+        services.AddScoped(typeof(ICommentRepository), typeof(CommentRepository));
         
         return services;
     }
