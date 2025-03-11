@@ -18,8 +18,9 @@ public class CommentRepository(IDbConnectionFactory dbConnectionFactory) : Gener
                                      c.UserId,
                                      c.Content,
                                      c.CreatedAtUtc,
-                                     c.CreatedBy
+                                     (u.FirstName + ' ' + u.LastName) AS createdBy
                                  FROM Comments c
+                                 JOIN Users u on c.UserId = u.Id
                                  WHERE c.CardId = @CardId
                              """;
 
