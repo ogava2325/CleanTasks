@@ -1,5 +1,6 @@
 using Application.Common.Dtos;
 using Application.Features.Column.Commands.CreateColumn;
+using Application.Features.Column.Commands.DeleteColumn;
 using Application.Features.Column.Queries;
 using Domain.Entities;
 using MediatR;
@@ -36,6 +37,16 @@ namespace Api.Controllers
             var columns = await _mediator.Send(query);
 
             return columns;
+        }
+        
+        // DELETE api/<ColumnsController>/5
+        [HttpDelete("{id:guid}")]
+        public async Task<IActionResult> Delete(Guid id)
+        {
+            var command = new DeleteColumnCommand(id);
+
+            await _mediator.Send(command);
+            return NoContent();
         }
     }
 }
