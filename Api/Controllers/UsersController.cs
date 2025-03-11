@@ -5,6 +5,7 @@ using Application.Common.Interfaces.Persistence.Repositories;
 using Application.Features.User.Commands.LoginUser;
 using Application.Features.User.Commands.RegisterUser;
 using Application.Features.User.Queries.GetAllUsers;
+using Application.Features.User.Queries.GetUser;
 using Domain.Entities;
 using MediatR;
 using Microsoft.AspNetCore.Authorization;
@@ -34,6 +35,16 @@ namespace Api.Controllers
             
             var users = await _mediator.Send(query);
             return Ok(users);
+        }
+        
+        // GET api/<UsersController>
+        [HttpGet("{userId:guid}")]
+        public async Task<ActionResult<UserDto>> GetById(Guid userId)
+        {
+            var query = new GetUserQuery(userId);
+            
+            var user = await _mediator.Send(query);
+            return Ok(user);
         }
         
         // POST api/<UsersController>
