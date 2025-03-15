@@ -1,3 +1,4 @@
+using Application.Common.Dtos;
 using Application.Common.Interfaces.Persistence;
 using Application.Common.Interfaces.Persistence.Base;
 using Application.Common.Interfaces.Persistence.Repositories;
@@ -23,6 +24,7 @@ public static class ServiceCollectionExtensions
         services.AddScoped(typeof(IColumnRepository), typeof(ColumnRepository));
         services.AddScoped(typeof(IStateRepository), typeof(StateRepository));
         services.AddScoped(typeof(ICommentRepository), typeof(CommentRepository));
+        services.AddScoped(typeof(IStatsRepository), typeof(StatsRepository));
         
         return services;
     }
