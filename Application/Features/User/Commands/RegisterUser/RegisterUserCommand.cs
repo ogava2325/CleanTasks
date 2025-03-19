@@ -1,8 +1,9 @@
+using Application.Common.Abstraction;
 using MediatR;
 
 namespace Application.Features.User.Commands.RegisterUser;
 
-public record RegisterUserCommand : IRequest<Guid>
+public record RegisterUserCommand : IRequest<Result<Guid>>
 {
     public string FirstName { get; set; }
     public string LastName { get; set; }
