@@ -1,5 +1,6 @@
 using Application.Common.Dtos;
 using Application.Common.Interfaces.Persistence.Repositories;
+using Application.Common.Models;
 using AutoMapper;
 using MediatR;
 
@@ -8,13 +9,23 @@ namespace Application.Features.Project.Queries.GetProjectsByUserId;
 public class GetProjectsByUserIdQueryHandler(
     IMapper mapper,
     IProjectRepository projectRepository)
-    : IRequestHandler<GetProjectsByUserIdQuery, IEnumerable<ProjectDto>>
+    : IRequestHandler<GetProjectsByUserIdQuery, PaginatedList<ProjectDto>>
 {
-    public async Task<IEnumerable<ProjectDto>> Handle(GetProjectsByUserIdQuery request,
+    public async Task<PaginatedList<ProjectDto>> Handle(GetProjectsByUserIdQuery request,
         CancellationToken cancellationToken)
     {
-        var projects = await projectRepository.GetProjectsByUserIdAsync(request.UserId);
+        var (projects, totalCount) = await projectRepository.GetProjectsByUserIdAsync(
+            request.UserId, 
+            request.PageNumber, 
+            request.PageSize, 
+            request.SearchTerm,
+            request.SortBy,
+            request.SortOrder,
+            request.StartDate,
+            request.EndDate);
+        
+        var projectsDto = mapper.Map<List<ProjectDto>>(projects);
 
-        return mapper.Map<IEnumerable<ProjectDto>>(projects);
+        return new PaginatedList<ProjectDto>(projectsDto, totalCount, request.PageNumber, request.PageSize);
     }
 }
