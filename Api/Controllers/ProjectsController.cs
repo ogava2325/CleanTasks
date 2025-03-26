@@ -1,10 +1,10 @@
 using Application.Common.Dtos;
+using Application.Common.Models;
 using Application.Features.Project.Commands.CreateProject;
 using Application.Features.Project.Commands.DeleteProject;
 using Application.Features.Project.Queries.GetProjectsByUserId;
 using Domain.Entities;
 using MediatR;
-using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 
 namespace Api.Controllers
@@ -21,10 +21,9 @@ namespace Api.Controllers
         }
 
         // GET: api/<ProjectsController>
-        [HttpGet("{userId}")]
-        public async Task<IEnumerable<ProjectDto>> GetProjectsByUserId(Guid userId)
+        [HttpGet]
+        public async Task<PaginatedList<ProjectDto>> GetProjectsByUserId([FromQuery] GetProjectsByUserIdQuery query)
         {
-            var query = new GetProjectsByUserIdQuery(userId);
             var projects = await _mediator.Send(query);
 
             return projects;

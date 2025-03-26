@@ -1,7 +1,6 @@
-using System.Runtime.InteropServices;
-using Application.Common.Dtos;
 using Application.Common.Interfaces.Persistence.Base;
 using Application.Common.Interfaces.Persistence.Repositories;
+using Application.Features.Project.Queries.GetProjectsByUserId;
 using Dapper;
 using Domain.Entities;
 
@@ -12,17 +11,66 @@ public class ProjectRepository(IDbConnectionFactory dbConnectionFactory)
 {
     private readonly IDbConnectionFactory _dbConnectionFactory = dbConnectionFactory;
 
-    public async Task<IEnumerable<Project>> GetProjectsByUserIdAsync(Guid userId)
+    public async Task<(IEnumerable<Project>, int)> GetProjectsByUserIdAsync(
+        Guid userId,
+        int pageNumber,
+        int pageSize,
+        string? searchTerm,
+        ProjectsSortBy sortBy,
+        ProjectsSortOrder sortOrder,
+        DateTimeOffset? startDate,
+        DateTimeOffset? endDate)
     {
         using var connection = _dbConnectionFactory.CreateConnection();
 
-        var query = """
-                    SELECT * FROM Projects p
-                    INNER JOIN Users_Projects up ON p.Id = up.ProjectId
-                    WHERE up.UserId = @UserId
-                    """;
+        var sortByColumn = sortBy switch
+        {
+            ProjectsSortBy.CreatedAtUtc => "p.CreatedAtUtc",
+            ProjectsSortBy.Title => "p.Title",
+            _ => "p.CreatedAtUtc"
+        };
 
-        return await connection.QueryAsync<Project>(query, new { UserId = userId });
+        var sortOrderString = sortOrder == ProjectsSortOrder.Asc ? "ASC" : "DESC";
+
+        const string countQuery = $"""
+                                   SELECT COUNT(*) 
+                                   FROM Projects p
+                                   INNER JOIN Users_Projects up ON p.Id = up.ProjectId
+                                   WHERE up.UserId = @UserId
+                                   """;
+
+        var dataQuery = $"""
+                         SELECT
+                             p.Id,
+                             p.Title,
+                             p.Description,
+                             p.CreatedAtUtc,
+                             p.CreatedBy
+                         FROM Projects p
+                         INNER JOIN Users_Projects up ON p.Id = up.ProjectId
+                         WHERE up.UserId = @UserId
+                           AND (@SearchTerm IS NULL OR p.Title LIKE @SearchTerm)
+                            AND (@StartDate IS NULL OR p.CreatedAtUtc >= @StartDate)
+                            AND (@EndDate IS NULL OR p.CreatedAtUtc <= @EndDate)
+                         ORDER BY {sortByColumn} {sortOrderString}
+                         OFFSET @Offset ROWS
+                         FETCH NEXT @PageSize ROWS ONLY
+                         """;
+
+        var parameters = new
+        {
+            UserId = userId,
+            Offset = (pageNumber - 1) * pageSize,
+            PageSize = pageSize,
+            SearchTerm = string.IsNullOrWhiteSpace(searchTerm) ? null : $"%{searchTerm}%",
+            StartDate = startDate,
+            EndDate = endDate
+        };
+
+        var projects = await connection.QueryAsync<Project>(dataQuery, parameters);
+        var count = await connection.ExecuteScalarAsync<int>(countQuery, new { UserId = userId });
+
+        return (projects, count);
     }
 
     public async Task CreateProjectAsync(Project project, Guid userId, Guid roleId)
