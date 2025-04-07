@@ -5,5 +5,5 @@ namespace Application.Common.Interfaces.Persistence.Repositories;
 
 public interface IRoleRepository : IGenericRepository<Role, Guid>
 {
-    
+    Task<Guid> GetRoleIdByNameAsync(string name);
 }

@@ -123,4 +123,83 @@ public class ProjectRepository(IDbConnectionFactory dbConnectionFactory)
             Console.WriteLine($"Error occurred while creating project: {exception.Message}");
         }
     }
+
+    public async Task AddUserToProjectAsync(Guid projectId, Guid userId, Guid roleId)
+    {
+        using var connection = _dbConnectionFactory.CreateConnection();
+
+        const string insertIntoUsersProjectsQuery = """
+                                                    INSERT INTO Users_Projects (UserId, ProjectId, RoleId)
+                                                    VALUES (@UserId, @ProjectId, @RoleId);
+                                                    """;
+        await connection.ExecuteAsync(
+            insertIntoUsersProjectsQuery,
+            new
+            {
+                ProjectId = projectId,
+                UserId = userId,
+                RoleId = roleId,
+            }
+        );
+    }
+
+    public async Task<bool> IsProjectAdminAsync(Guid projectId, Guid userId, Guid roleId)
+    {
+        using var connection = _dbConnectionFactory.CreateConnection();
+        const string query = """
+                             SELECT COUNT(*)
+                             FROM Users_Projects
+                             WHERE ProjectId = @ProjectId
+                               AND UserId = @UserId
+                               AND RoleId = @RoleId
+                             """;
+
+        var count = await connection.ExecuteScalarAsync<int>(
+            query,
+            new
+            {
+                ProjectId = projectId,
+                UserId = userId,
+                RoleId = roleId
+            }
+        );
+
+        return count > 0;
+    }
+
+    public async Task<bool> IsUserInProjectAsync(Guid projectId, Guid userId)
+    {
+        using var connection = _dbConnectionFactory.CreateConnection();
+
+        const string query = """
+                             SELECT COUNT(*)
+                             FROM Users_Projects
+                             WHERE ProjectId = @ProjectId
+                               AND UserId = @UserId
+                             """;
+
+        var count = await connection.ExecuteScalarAsync<int>(
+            query,
+            new
+            {
+                ProjectId = projectId,
+                UserId = userId
+            }
+        );
+
+        return count > 0;
+    }
+
+    public async Task RemoveUserFromProjectAsync(Guid projectId, Guid userId)
+    {
+        using var connection = _dbConnectionFactory.CreateConnection();
+
+        const string query = """
+                             DELETE FROM Users_Projects
+                             WHERE ProjectId = @ProjectId
+                               AND UserId = @UserId
+                             """;
+
+        await connection.ExecuteAsync(query, new { ProkectId = projectId, UserId = userId });
+    }
 }
