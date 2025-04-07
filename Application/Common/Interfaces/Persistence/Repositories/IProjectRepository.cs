@@ -17,4 +17,12 @@ public interface IProjectRepository : IGenericRepository<Project, Guid>
         DateTimeOffset? endDate);
     
     Task CreateProjectAsync(Project project, Guid userId, Guid roleId);
+    
+    Task AddUserToProjectAsync(Guid projectId, Guid userId, Guid roleId);
+    
+    Task<bool> IsProjectAdminAsync(Guid projectId, Guid userId, Guid roleId);
+    
+    Task<bool> IsUserInProjectAsync(Guid projectId, Guid userId);
+    
+    Task RemoveUserFromProjectAsync(Guid projectId, Guid userId);
 }
