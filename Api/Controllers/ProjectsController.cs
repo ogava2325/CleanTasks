@@ -2,6 +2,7 @@ using Application.Common.Dtos;
 using Application.Common.Models;
 using Application.Features.Project.Commands.CreateProject;
 using Application.Features.Project.Commands.DeleteProject;
+using Application.Features.Project.Commands.UpdateProject;
 using Application.Features.Project.Queries.GetProjectById;
 using Application.Features.Project.Queries.GetProjectsByUserId;
 using Application.Features.User.Commands.AddUserToProject;
@@ -49,8 +50,28 @@ namespace Api.Controllers
             return Ok(project);
         }
         
-        // Post api/<ProjectsController>
-        [HttpPost("{projectId:guid}")]
+        // Post api/<ProjectsController/5>
+        [HttpPut("{id:guid}")]
+        public async Task<ActionResult> Put(Guid id, UpdateProjectCommand command)
+        {
+            var authResult = await authorizationService.AuthorizeAsync(User, id, PoliciesConstants.IsProjectAdmin);
+            if (!authResult.Succeeded)
+            {
+                return Forbid();
+            }
+            
+            if(id != command.Id)
+            {
+                return BadRequest();
+            }
+            
+            await mediator.Send(command);
+
+            return NoContent();
+        }
+        
+        // Post api/<ProjectsController/5/users>
+        [HttpPost("{projectId:guid}/users")]
         public async Task<ActionResult<Project>> AddUserToProject(Guid projectId, AddUserToProjectCommand command)
         {
             var authResult = await authorizationService.AuthorizeAsync(User, projectId, PoliciesConstants.IsProjectAdmin);

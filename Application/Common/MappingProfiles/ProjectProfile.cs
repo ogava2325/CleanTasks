@@ -1,5 +1,6 @@
 using Application.Common.Dtos;
 using Application.Features.Project.Commands.CreateProject;
+using Application.Features.Project.Commands.UpdateProject;
 using AutoMapper;
 using Domain.Entities;
 
@@ -11,8 +12,8 @@ public class ProjectProfile : Profile
     {
         CreateMap<CreateProjectCommand, Project>();
         
-        CreateMap<Project, ProjectDto>().ReverseMap();
+        CreateMap<UpdateProjectCommand, Project>();
         
-        CreateMap<Card, CardDto>().ReverseMap();
+        CreateMap<Project, ProjectDto>().ReverseMap();
     }
 }
