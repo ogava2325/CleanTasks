@@ -10,10 +10,10 @@ namespace Api.Controllers
     public class StatsController(IMediator mediator) : ControllerBase
     {
         // GET: api/<StatsController>
-        [HttpGet]
-        public async Task<StatsDto> Get()
+        [HttpGet("{userId:guid}")]
+        public async Task<StatsDto> Get(Guid userId)
         {
-            var query = new GetStatsQuery();
+            var query = new GetStatsQuery(userId);
             
             return await mediator.Send(query);
         }

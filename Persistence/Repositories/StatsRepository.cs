@@ -8,15 +8,25 @@ namespace Persistence.Repositories;
 public class StatsRepository(IDbConnectionFactory dbConnectionFactory)
     : IStatsRepository
 {
-    public async Task<StatsDto> GetAsync()
+    public async Task<StatsDto> GetAsync(Guid userId)
     {
         using var connection = dbConnectionFactory.CreateConnection();
+        
         const string sql = """
                            SELECT
-                           (SELECT COUNT(*) FROM Projects) AS ProjectsCount,
-                           (SELECT COUNT(*) FROM Users) AS UsersCount,
-                           (SELECT Count(*) FROM Cards) AS CardsCount
+                               (SELECT COUNT(*) 
+                                FROM Projects 
+                                WHERE CreatedBy = @UserId) AS ProjectsCreatedCount,
+                               
+                               (SELECT COUNT(*) 
+                                FROM Cards 
+                                WHERE CreatedBy = @UserId) AS CardsCreatedCount,
+                               
+                               (SELECT COUNT(DISTINCT up.ProjectId) 
+                                FROM Users_Projects up
+                                WHERE up.UserId = @UserId) AS ProjectsMemberCount
                            """;
-        return await connection.QuerySingleAsync<StatsDto>(sql);
+        
+        return await connection.QuerySingleAsync<StatsDto>(sql, new { UserId = userId.ToString()});
     }
 }
