@@ -4,5 +4,5 @@ namespace Application.Common.Interfaces.Persistence.Repositories;
 
 public interface IStatsRepository
 {
-    Task<StatsDto> GetAsync();
+    Task<StatsDto> GetAsync(Guid userId);
 }

@@ -10,6 +10,6 @@ public class GetStatsQueryHandler(
 {
     public async Task<StatsDto> Handle(GetStatsQuery request, CancellationToken cancellationToken)
     {
-        return await statsRepository.GetAsync();
+        return await statsRepository.GetAsync(request.UserId);
     }
 }
