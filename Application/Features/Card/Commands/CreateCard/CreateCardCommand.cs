@@ -8,4 +8,6 @@ public class CreateCardCommand : IRequest<Guid>
     public Guid ColumnId { get; set; }
     
     public int RowIndex { get; set; }
+
+    public Guid UserId { get; set; }
 }

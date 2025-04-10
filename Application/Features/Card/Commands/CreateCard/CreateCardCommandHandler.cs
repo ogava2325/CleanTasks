@@ -14,7 +14,7 @@ public class CreateCardCommandHandler(
         var card = mapper.Map<Domain.Entities.Card>(request);
         
         card.CreatedAtUtc = DateTimeOffset.UtcNow;
-        card.CreatedBy = "some user";
+        card.CreatedBy = request.UserId.ToString();
         
         return await cardRepository.AddAsync(card);
     }
