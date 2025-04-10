@@ -1,11 +1,11 @@
 using System.Text.Json.Serialization;
-using Application;
+using Api.Authorization;
 using Application.Extensions;
 using Database;
+using Domain.Constants;
 using Domain.Enums;
-using Infrastructure;
 using Infrastructure.Extensions;
-using NuGet.Protocol;
+using Microsoft.AspNetCore.Authorization;
 using Persistence.Extensions;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -34,6 +34,16 @@ builder.Services.AddCors(options =>
         .AllowAnyMethod()
         .AllowAnyHeader());
 });
+
+builder.Services.AddAuthorization(options =>
+{
+    options.AddPolicy(PoliciesConstants.IsProjectAdmin, policyBuilder =>
+    {
+        policyBuilder.Requirements.Add(new ProjectAdminRequirement());
+    });
+});
+
+builder.Services.AddScoped<IAuthorizationHandler, ProjectAdminHandler>();
 
 var app = builder.Build();
 
