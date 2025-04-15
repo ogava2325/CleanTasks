@@ -1,8 +1,11 @@
 using Application.Common.Dtos;
 using Application.Common.Models;
+using Application.Features.Project.Commands.ArchiveProject;
 using Application.Features.Project.Commands.CreateProject;
 using Application.Features.Project.Commands.DeleteProject;
+using Application.Features.Project.Commands.RestoreProject;
 using Application.Features.Project.Commands.UpdateProject;
+using Application.Features.Project.Queries.GetArchivedProjectsByUserId;
 using Application.Features.Project.Queries.GetProjectById;
 using Application.Features.Project.Queries.GetProjectsByUserId;
 using Application.Features.User.Commands.AddUserToProject;
@@ -25,6 +28,15 @@ namespace Api.Controllers
         // GET: api/<ProjectsController>
         [HttpGet]
         public async Task<PaginatedList<ProjectDto>> GetProjectsByUserId([FromQuery] GetProjectsByUserIdQuery query)
+        {
+            var projects = await mediator.Send(query);
+
+            return projects;
+        }
+        
+        // GET: api/<ProjectsController>
+        [HttpGet("archived")]
+        public async Task<PaginatedList<ProjectDto>> GetArchivedProjectsByUserId([FromQuery] GetArchivedProjectsByUserIdQuery query)
         {
             var projects = await mediator.Send(query);
 
@@ -96,6 +108,38 @@ namespace Api.Controllers
         {
             var command = new DeleteProjectCommand(id);
             await mediator.Send(command);
+            return NoContent();
+        }
+        
+        [HttpPut("{id:guid}/archive")]
+        public async Task<IActionResult> Archive(Guid id)
+        {
+            var authResult = await authorizationService.AuthorizeAsync(User, id, PoliciesConstants.IsProjectAdmin);
+            if (!authResult.Succeeded)
+            {
+                return Forbid();
+            }
+            
+            var command = new ArchiveProjectCommand(id);
+            
+            await mediator.Send(command);
+            
+            return NoContent();
+        }
+        
+        [HttpPut("{id:guid}/restore")]
+        public async Task<IActionResult> Restore(Guid id)
+        {
+            var authResult = await authorizationService.AuthorizeAsync(User, id, PoliciesConstants.IsProjectAdmin);
+            if (!authResult.Succeeded)
+            {
+                return Forbid();
+            }
+            
+            var command = new RestoreProjectCommand(id);
+            
+            await mediator.Send(command);
+            
             return NoContent();
         }
     }

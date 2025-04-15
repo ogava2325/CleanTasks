@@ -9,4 +9,5 @@ public abstract class BaseAuditableEntity : BaseEntity
 
     public DateTimeOffset? LastModifiedAtUtc { get; set; }
     public string? LastModifiedBy { get; set; }
+    
 }

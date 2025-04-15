@@ -4,14 +4,14 @@ using Application.Common.Models;
 using AutoMapper;
 using MediatR;
 
-namespace Application.Features.Project.Queries.GetProjectsByUserId;
+namespace Application.Features.Project.Queries.GetArchivedProjectsByUserId;
 
-public class GetProjectsByUserIdQueryHandler(
+public class GetArchivedProjectsByUserIdQueryHandler(
     IMapper mapper,
     IProjectRepository projectRepository)
-    : IRequestHandler<GetProjectsByUserIdQuery, PaginatedList<ProjectDto>>
+    : IRequestHandler<GetArchivedProjectsByUserIdQuery, PaginatedList<ProjectDto>>
 {
-    public async Task<PaginatedList<ProjectDto>> Handle(GetProjectsByUserIdQuery request,
+    public async Task<PaginatedList<ProjectDto>> Handle(GetArchivedProjectsByUserIdQuery request,
         CancellationToken cancellationToken)
     {
         var paginationParameters = new PaginationParameters
@@ -22,12 +22,13 @@ public class GetProjectsByUserIdQueryHandler(
             SortBy = request.SortBy,
             SortOrder = request.SortOrder
         };
-
+        
         var (projects, totalCount) = await projectRepository.GetProjectsByUserIdAsync(
             request.UserId,
             paginationParameters,
             request.StartDate,
-            request.EndDate
+            request.EndDate,
+            onlyArchived: true
         );
 
         var projectsDto = mapper.Map<List<ProjectDto>>(projects);
