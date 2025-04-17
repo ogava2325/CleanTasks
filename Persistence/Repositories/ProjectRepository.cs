@@ -1,5 +1,6 @@
 using Application.Common.Interfaces.Persistence.Base;
 using Application.Common.Interfaces.Persistence.Repositories;
+using Application.Common.Models;
 using Application.Features.Project.Queries.GetProjectsByUserId;
 using Dapper;
 using Domain.Entities;
@@ -13,30 +14,93 @@ public class ProjectRepository(IDbConnectionFactory dbConnectionFactory)
 
     public async Task<(IEnumerable<Project>, int)> GetProjectsByUserIdAsync(
         Guid userId,
-        int pageNumber,
-        int pageSize,
-        string? searchTerm,
-        ProjectsSortBy sortBy,
-        ProjectsSortOrder sortOrder,
+        PaginationParameters paginationParameters,
         DateTimeOffset? startDate,
-        DateTimeOffset? endDate)
+        DateTimeOffset? endDate,
+        bool? onlyArchived = false)
     {
         using var connection = _dbConnectionFactory.CreateConnection();
 
-        var sortByColumn = sortBy switch
+        var sortByColumn = paginationParameters.SortBy switch
         {
             ProjectsSortBy.CreatedAtUtc => "p.CreatedAtUtc",
             ProjectsSortBy.Title => "p.Title",
             _ => "p.CreatedAtUtc"
         };
 
-        var sortOrderString = sortOrder == ProjectsSortOrder.Asc ? "ASC" : "DESC";
+        var sortOrderString = paginationParameters.SortOrder == ProjectsSortOrder.Asc ? "ASC" : "DESC";
+
+        var archivedCondition = onlyArchived == true
+            ? "p.IsArchived = 1"
+            : "p.IsArchived = 0";
+
+        var countQuery = $"""
+                          SELECT COUNT(*) 
+                          FROM Projects p
+                          INNER JOIN Users_Projects up ON p.Id = up.ProjectId
+                          WHERE up.UserId = @UserId
+                            AND {archivedCondition}
+                          """;
+
+        var dataQuery = $"""
+                         SELECT
+                             p.Id,
+                             p.Title,
+                             p.Description,
+                             p.CreatedAtUtc,
+                             p.CreatedBy
+                         FROM Projects p
+                         INNER JOIN Users_Projects up ON p.Id = up.ProjectId
+                         WHERE up.UserId = @UserId
+                           AND {archivedCondition}
+                           AND (@SearchTerm IS NULL OR p.Title LIKE @SearchTerm)
+                           AND (@StartDate IS NULL OR p.CreatedAtUtc >= @StartDate)
+                           AND (@EndDate IS NULL OR p.CreatedAtUtc <= @EndDate)
+                         ORDER BY {sortByColumn} {sortOrderString}
+                         OFFSET @Offset ROWS
+                         FETCH NEXT @PageSize ROWS ONLY
+                         """;
+
+        var parameters = new
+        {
+            UserId = userId,
+            Offset = (paginationParameters.PageNumber - 1) * paginationParameters.PageSize,
+            PageSize = paginationParameters.PageSize,
+            SearchTerm = string.IsNullOrWhiteSpace(paginationParameters.SearchTerm)
+                ? null
+                : $"%{paginationParameters.SearchTerm}%",
+            StartDate = startDate,
+            EndDate = endDate,
+        };
+
+        var projects = await connection.QueryAsync<Project>(dataQuery, parameters);
+        var count = await connection.ExecuteScalarAsync<int>(countQuery,
+            new { UserId = userId });
+
+        return (projects, count);
+    }
+
+    public async Task<(IEnumerable<Project>, int)> GetArchivedProjectsByUserIdAsync(Guid userId,
+        PaginationParameters paginationParameters, DateTimeOffset? startDate,
+        DateTimeOffset? endDate)
+    {
+        using var connection = _dbConnectionFactory.CreateConnection();
+
+        var sortByColumn = paginationParameters.SortBy switch
+        {
+            ProjectsSortBy.CreatedAtUtc => "p.CreatedAtUtc",
+            ProjectsSortBy.Title => "p.Title",
+            _ => "p.CreatedAtUtc"
+        };
+
+        var sortOrderString = paginationParameters.SortOrder == ProjectsSortOrder.Asc ? "ASC" : "DESC";
 
         const string countQuery = $"""
                                    SELECT COUNT(*) 
                                    FROM Projects p
                                    INNER JOIN Users_Projects up ON p.Id = up.ProjectId
                                    WHERE up.UserId = @UserId
+                                    AND p.IsArchived = 1
                                    """;
 
         var dataQuery = $"""
@@ -49,9 +113,10 @@ public class ProjectRepository(IDbConnectionFactory dbConnectionFactory)
                          FROM Projects p
                          INNER JOIN Users_Projects up ON p.Id = up.ProjectId
                          WHERE up.UserId = @UserId
+                           AND p.IsArchived = 1
                            AND (@SearchTerm IS NULL OR p.Title LIKE @SearchTerm)
-                            AND (@StartDate IS NULL OR p.CreatedAtUtc >= @StartDate)
-                            AND (@EndDate IS NULL OR p.CreatedAtUtc <= @EndDate)
+                           AND (@StartDate IS NULL OR p.CreatedAtUtc >= @StartDate)
+                           AND (@EndDate IS NULL OR p.CreatedAtUtc <= @EndDate)
                          ORDER BY {sortByColumn} {sortOrderString}
                          OFFSET @Offset ROWS
                          FETCH NEXT @PageSize ROWS ONLY
@@ -60,15 +125,18 @@ public class ProjectRepository(IDbConnectionFactory dbConnectionFactory)
         var parameters = new
         {
             UserId = userId,
-            Offset = (pageNumber - 1) * pageSize,
-            PageSize = pageSize,
-            SearchTerm = string.IsNullOrWhiteSpace(searchTerm) ? null : $"%{searchTerm}%",
+            Offset = (paginationParameters.PageNumber - 1) * paginationParameters.PageSize,
+            PageSize = paginationParameters.PageSize,
+            SearchTerm = string.IsNullOrWhiteSpace(paginationParameters.SearchTerm)
+                ? null
+                : $"%{paginationParameters.SearchTerm}%",
             StartDate = startDate,
-            EndDate = endDate
+            EndDate = endDate,
         };
 
         var projects = await connection.QueryAsync<Project>(dataQuery, parameters);
-        var count = await connection.ExecuteScalarAsync<int>(countQuery, new { UserId = userId });
+        var count = await connection.ExecuteScalarAsync<int>(countQuery,
+            new { UserId = userId });
 
         return (projects, count);
     }
@@ -201,5 +269,64 @@ public class ProjectRepository(IDbConnectionFactory dbConnectionFactory)
                              """;
 
         await connection.ExecuteAsync(query, new { ProkectId = projectId, UserId = userId });
+    }
+
+    public async Task ArchiveAsync(Guid projectId)
+    {
+        using var connection = _dbConnectionFactory.CreateConnection();
+
+        const string query = """
+                             UPDATE Projects
+                             SET IsArchived = 1,
+                                 LastModifiedAtUtc = @LastModifiedAtUtc,
+                                 ArchivedAt = @ArchivedAt
+                             
+
+                             WHERE Id = @ProjectId
+                             """;
+
+        await connection.ExecuteAsync(query,
+            new
+            {
+                ProjectId = projectId,
+                LastModifiedAtUtc = DateTimeOffset.UtcNow,
+                ArchivedAt = DateTimeOffset.UtcNow,
+            });
+    }
+
+    public async Task RestoreAsync(Guid projectId)
+    {
+        using var connection = _dbConnectionFactory.CreateConnection();
+
+        const string query = """
+                             UPDATE Projects
+                             SET IsArchived = 0,
+                                 LastModifiedAtUtc = @LastModifiedAtUtc,
+                                 ArchivedAt = NULL
+
+                             WHERE Id = @ProjectId
+                             """;
+
+        await connection.ExecuteAsync(query,
+            new
+            {
+                ProjectId = projectId,
+                LastModifiedAtUtc = DateTimeOffset.UtcNow
+            });
+    }
+
+    public async Task DeleteArchivedOlderThanAsync(TimeSpan ageThreshold)
+    {
+        using var connection = _dbConnectionFactory.CreateConnection();
+
+        var thresholdDate = DateTimeOffset.UtcNow - ageThreshold;
+
+        const string query = """
+                             DELETE FROM Projects
+                             WHERE IsArchived = 1
+                                AND ArchivedAt < @ThresholdDate;
+                             """;
+
+        await connection.ExecuteAsync(query, new { ThresholdDate = thresholdDate });
     }
 }

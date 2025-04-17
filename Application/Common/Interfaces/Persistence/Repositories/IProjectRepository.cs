@@ -1,5 +1,5 @@
 using Application.Common.Interfaces.Persistence.Base;
-using Application.Features.Project.Queries.GetProjectsByUserId;
+using Application.Common.Models;
 using Domain.Entities;
 
 namespace Application.Common.Interfaces.Persistence.Repositories;
@@ -7,22 +7,33 @@ namespace Application.Common.Interfaces.Persistence.Repositories;
 public interface IProjectRepository : IGenericRepository<Project, Guid>
 {
     Task<(IEnumerable<Project>, int)> GetProjectsByUserIdAsync(
-        Guid userId, 
-        int pageNumber, 
-        int pageSize, 
-        string? searchTerm, 
-        ProjectsSortBy sortBy,
-        ProjectsSortOrder sortOrder,
+        Guid userId,
+        PaginationParameters paginationParameters,
         DateTimeOffset? startDate,
-        DateTimeOffset? endDate);
-    
+        DateTimeOffset? endDate,
+        bool? onlyArchived = false
+    );
+
+    Task<(IEnumerable<Project>, int)> GetArchivedProjectsByUserIdAsync(
+        Guid userId,
+        PaginationParameters paginationParameters,
+        DateTimeOffset? startDate,
+        DateTimeOffset? endDate
+    );
+
     Task CreateProjectAsync(Project project, Guid userId, Guid roleId);
-    
+
     Task AddUserToProjectAsync(Guid projectId, Guid userId, Guid roleId);
-    
+
     Task<bool> IsProjectAdminAsync(Guid projectId, Guid userId, Guid roleId);
-    
+
     Task<bool> IsUserInProjectAsync(Guid projectId, Guid userId);
-    
+
     Task RemoveUserFromProjectAsync(Guid projectId, Guid userId);
+
+    Task ArchiveAsync(Guid projectId);
+    
+    Task RestoreAsync(Guid projectId);
+    
+    Task DeleteArchivedOlderThanAsync(TimeSpan ageThreshold);
 }

@@ -33,6 +33,10 @@
       <EmbeddedResource Include="Scripts\009 - Create Cascade delete for project.sql" />
       <None Remove="Scripts\010 - Create Columns table.sql" />
       <EmbeddedResource Include="Scripts\010 - Create Columns table.sql" />
+      <None Remove="Scripts\011 - Added archived property.sql" />
+      <EmbeddedResource Include="Scripts\011 - Added archived property.sql" />
+      <None Remove="Scripts\012 - Added archivedAt property.sql" />
+      <EmbeddedResource Include="Scripts\012 - Added archivedAt property.sql" />
     </ItemGroup>
 
     <ItemGroup>
