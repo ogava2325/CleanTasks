@@ -89,10 +89,9 @@ namespace Api.Controllers
         [HttpPost("{projectId:guid}/users")]
         public async Task<ActionResult<Project>> AddUserToProject(Guid projectId, AddUserToProjectCommand command)
         {
-            var authResult =
-                await authorizationService.AuthorizeAsync(User, projectId, PoliciesConstants.IsProjectAdmin);
-
-
+            var authResult = await authorizationService
+                .AuthorizeAsync(User, projectId, PoliciesConstants.IsProjectAdmin);
+            
             if (!authResult.Succeeded)
             {
                 return Forbid();
@@ -120,14 +119,9 @@ namespace Api.Controllers
         }
 
         [HttpPut("{id:guid}/archive")]
+        [Authorize(Policy = PoliciesConstants.IsProjectAdmin)]
         public async Task<IActionResult> Archive(Guid id)
         {
-            var authResult = await authorizationService.AuthorizeAsync(User, id, PoliciesConstants.IsProjectAdmin);
-            if (!authResult.Succeeded)
-            {
-                return Forbid();
-            }
-
             var command = new ArchiveProjectCommand(id);
 
             await mediator.Send(command);
@@ -136,14 +130,9 @@ namespace Api.Controllers
         }
 
         [HttpPut("{id:guid}/restore")]
+        [Authorize(Policy = PoliciesConstants.IsProjectAdmin)]
         public async Task<IActionResult> Restore(Guid id)
         {
-            var authResult = await authorizationService.AuthorizeAsync(User, id, PoliciesConstants.IsProjectAdmin);
-            if (!authResult.Succeeded)
-            {
-                return Forbid();
-            }
-
             var command = new RestoreProjectCommand(id);
 
             await mediator.Send(command);
