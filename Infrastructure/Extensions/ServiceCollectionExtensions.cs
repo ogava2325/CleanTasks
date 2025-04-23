@@ -37,11 +37,25 @@ public static class ServiceCollectionExtensions
                 {
                     OnMessageReceived = context =>
                     {
-                        var authHeader = context.Request.Headers["Authorization"].FirstOrDefault();
-                        if (!string.IsNullOrEmpty(authHeader) && authHeader.StartsWith("Bearer "))
+                        var authHeader = context.Request.Headers["Authorization"]
+                            .FirstOrDefault();
+                        if (!string.IsNullOrEmpty(authHeader) &&
+                            authHeader.StartsWith("Bearer "))
                         {
-                            context.Token = authHeader.Substring("Bearer ".Length).Trim();
+                            context.Token = authHeader["Bearer ".Length..].Trim();
+                            return Task.CompletedTask;
                         }
+
+                        // 2) If this is a SignalR negotiate/WebSocket request, pull from ?access_token=
+                        var accessToken = context.Request.Query["access_token"]
+                            .FirstOrDefault();
+                        var path = context.HttpContext.Request.Path;
+                        if (!string.IsNullOrEmpty(accessToken) &&
+                            path.StartsWithSegments("/hubs/projects"))
+                        {
+                            context.Token = accessToken;
+                        }
+
                         return Task.CompletedTask;
                     }
                 };

@@ -8,13 +8,21 @@ namespace Api.Authorization;
 public class ProjectAdminHandler(
     IProjectRepository projectRepository,
     IRoleRepository roleRepository) 
-    : AuthorizationHandler<ProjectAdminRequirement, Guid>
+    : AuthorizationHandler<ProjectAdminRequirement>
 {
-    protected override async Task HandleRequirementAsync(AuthorizationHandlerContext context, ProjectAdminRequirement requirement, Guid resource)
+    protected override async Task HandleRequirementAsync(AuthorizationHandlerContext context, ProjectAdminRequirement requirement)
     {
-        var userIdClaim = context.User.FindFirst(ClaimTypes.NameIdentifier);
-        
-        if(userIdClaim is null || !Guid.TryParse(userIdClaim.Value, out var userId))
+        if (!(context.Resource is HttpContext httpContext) ||
+            !httpContext.Request.RouteValues.TryGetValue("id", out var rawId) ||
+            !Guid.TryParse(rawId?.ToString(), out var projectId))
+        {
+            context.Fail();
+            return;
+        }
+
+        var userIdString = context.User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+        if (string.IsNullOrEmpty(userIdString) ||
+            !Guid.TryParse(userIdString, out var userId))
         {
             context.Fail();
             return;
@@ -22,7 +30,8 @@ public class ProjectAdminHandler(
 
         var roleId = await roleRepository.GetRoleIdByNameAsync(RoleConstants.ProjectAdmin);
         
-        var isProjectAdmin = await projectRepository.IsProjectAdminAsync(resource, userId, roleId);
+        var isProjectAdmin = await projectRepository.IsProjectAdminAsync(projectId, userId, roleId);
+
         if (isProjectAdmin)
         {
             context.Succeed(requirement);

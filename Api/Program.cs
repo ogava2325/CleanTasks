@@ -1,5 +1,6 @@
 using System.Text.Json.Serialization;
 using Api.Authorization;
+using Api.Hubs;
 using Application.Extensions;
 using Database;
 using Domain.Constants;
@@ -9,6 +10,8 @@ using Microsoft.AspNetCore.Authorization;
 using Persistence.Extensions;
 
 var builder = WebApplication.CreateBuilder(args);
+
+builder.Services.AddSignalR();
 
 // Add services to the container.
 builder.Services.AddApplicationServices();
@@ -45,6 +48,8 @@ builder.Services.AddAuthorization(options =>
 
 builder.Services.AddScoped<IAuthorizationHandler, ProjectAdminHandler>();
 
+builder.Services.AddHttpContextAccessor();
+
 var app = builder.Build();
 
 // Configure the HTTP request pipeline.
@@ -55,6 +60,7 @@ if (app.Environment.IsDevelopment())
 }
 
 app.UseHttpsRedirection();
+app.MapHub<ProjectHub>("/hubs/projects");
 app.UseCors("all");
 app.UseAuthorization();
 app.MapControllers();
