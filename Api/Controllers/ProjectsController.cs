@@ -78,6 +78,11 @@ namespace Api.Controllers
 
             await mediator.Send(command);
 
+            await hubContext
+                .Clients
+                .All
+                .SendAsync("ProjectUpdated", id);
+            
             return NoContent();
         }
 
@@ -105,6 +110,12 @@ namespace Api.Controllers
         {
             var command = new DeleteProjectCommand(id);
             await mediator.Send(command);
+            
+            await hubContext
+                .Clients
+                .All
+                .SendAsync("ProjectDeleted", id);
+            
             return NoContent();
         }
 
