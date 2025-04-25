@@ -21,6 +21,7 @@ namespace Api.Controllers
 {
     [Route("api/[controller]")]
     [ApiController]
+    [Authorize]
     public class ProjectsController(
         IMediator mediator,
         IAuthorizationService authorizationService,
@@ -67,14 +68,9 @@ namespace Api.Controllers
 
         // Post api/<ProjectsController/5>
         [HttpPut("{id:guid}")]
+        [Authorize(Policy = PoliciesConstants.IsProjectAdmin)]
         public async Task<ActionResult> Put(Guid id, UpdateProjectCommand command)
         {
-            var authResult = await authorizationService.AuthorizeAsync(User, id, PoliciesConstants.IsProjectAdmin);
-            if (!authResult.Succeeded)
-            {
-                return Forbid();
-            }
-
             if (id != command.Id)
             {
                 return BadRequest();
@@ -86,31 +82,25 @@ namespace Api.Controllers
         }
 
         // Post api/<ProjectsController/5/users>
-        [HttpPost("{projectId:guid}/users")]
-        public async Task<ActionResult<Project>> AddUserToProject(Guid projectId, AddUserToProjectCommand command)
+        [HttpPost("{id:guid}/users")]
+        [Authorize(Policy = PoliciesConstants.IsProjectAdmin)]
+        public async Task<ActionResult<Project>> AddUserToProject(Guid id, AddUserToProjectCommand command)
         {
-            var authResult = await authorizationService
-                .AuthorizeAsync(User, projectId, PoliciesConstants.IsProjectAdmin);
-            
-            if (!authResult.Succeeded)
-            {
-                return Forbid();
-            }
-
-            if (projectId != command.ProjectId)
+            if (id != command.ProjectId)
             {
                 return BadRequest();
             }
 
             await mediator.Send(command);
             
-            await hubContext.Clients.User(command.UserId.ToString()).SendAsync("UserAdded", projectId, command.UserId);
+            await hubContext.Clients.User(command.UserId.ToString()).SendAsync("UserAdded", id, command.UserId);
 
             return NoContent();
         }
 
         // DELETE api/<ProjectsController>/5
-        [HttpDelete("{id}")]
+        [HttpDelete("{id:guid}")]
+        [Authorize(Policy = PoliciesConstants.IsProjectAdmin)]
         public async Task<IActionResult> Delete(Guid id)
         {
             var command = new DeleteProjectCommand(id);
