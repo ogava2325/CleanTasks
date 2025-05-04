@@ -40,7 +40,8 @@ public class DatabaseInitializer
         {
             new { Id = Guid.NewGuid(), Name = RoleConstants.GlobalAdmin },
             new { Id = Guid.NewGuid(), Name = RoleConstants.ProjectAdmin },
-            new { Id = Guid.NewGuid(), Name = RoleConstants.User }
+            new { Id = Guid.NewGuid(), Name = RoleConstants.User },
+            new { Id = Guid.NewGuid(), Name = RoleConstants.Viewer }
         };
 
         foreach (var role in roles)

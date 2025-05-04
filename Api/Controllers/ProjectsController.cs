@@ -6,10 +6,13 @@ using Application.Features.Project.Commands.CreateProject;
 using Application.Features.Project.Commands.DeleteProject;
 using Application.Features.Project.Commands.RestoreProject;
 using Application.Features.Project.Commands.UpdateProject;
+using Application.Features.Project.Commands.UpdateUserRole;
 using Application.Features.Project.Queries.GetArchivedProjectsByUserId;
 using Application.Features.Project.Queries.GetProjectById;
+using Application.Features.Project.Queries.GetProjectMembers;
 using Application.Features.Project.Queries.GetProjectsByUserId;
 using Application.Features.User.Commands.AddUserToProject;
+using Application.Features.User.Commands.RemoveUserFromProject;
 using Domain.Constants;
 using Domain.Entities;
 using MediatR;
@@ -96,11 +99,27 @@ namespace Api.Controllers
                 return BadRequest();
             }
 
-            await mediator.Send(command);
+            var result = await mediator.Send(command);
             
-            await hubContext.Clients.User(command.UserId.ToString()).SendAsync("UserAdded", id, command.UserId);
+            await hubContext.Clients.All.SendAsync("UserAdded", id);
 
-            return NoContent();
+            return Ok(result);
+        }
+        
+        [HttpDelete("{id:guid}/users")]
+        [Authorize(Policy = PoliciesConstants.IsProjectAdmin)]
+        public async Task<ActionResult<Project>> RemoveUserFromProject(Guid id, RemoveUserFromProjectCommand command)
+        {
+            if (id != command.ProjectId)
+            {
+                return BadRequest();
+            }
+            
+            var result = await mediator.Send(command);
+            
+            await hubContext.Clients.User(command.UserId.ToString()).SendAsync("UserRemoved", id, command.UserId);
+
+            return Ok(result);
         }
 
         // DELETE api/<ProjectsController>/5
@@ -139,6 +158,33 @@ namespace Api.Controllers
             await mediator.Send(command);
 
             return NoContent();
+        }
+        
+        [HttpPut("{id:guid}/users/{userId:guid}/role")]
+        [Authorize(Policy = PoliciesConstants.IsProjectAdmin)]
+        public async Task<IActionResult> ChangeUserRole(Guid id, Guid userId, UpdateUserRoleCommand command)
+        {
+            if (id != command.ProjectId || userId != command.UserId)
+            {
+                return BadRequest();
+            }
+            
+            var result = await mediator.Send(command);
+
+            await mediator.Send(command);
+
+            return Ok(result);
+        }
+        
+        // GET: api/<ProjectsController>
+        [HttpGet("{projectId:guid}/users")]
+        public async Task<PaginatedList<ProjectMemberModel>> GetProjectMembers(Guid projectId, [FromQuery] GetProjectMembersQuery query)
+        {
+            query.ProjectId = projectId;
+            
+            var projectMembers = await mediator.Send(query);
+            
+            return projectMembers;
         }
     }
 }

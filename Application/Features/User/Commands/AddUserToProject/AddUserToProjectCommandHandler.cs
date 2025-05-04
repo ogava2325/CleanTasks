@@ -1,5 +1,5 @@
+using Application.Common.Abstraction;
 using Application.Common.Interfaces.Persistence.Repositories;
-using Domain.Constants;
 using MediatR;
 
 namespace Application.Features.User.Commands.AddUserToProject;
@@ -7,19 +7,32 @@ namespace Application.Features.User.Commands.AddUserToProject;
 public class AddUserToProjectCommandHandler(
     IProjectRepository projectRepository,
     IRoleRepository roleRepository) 
-    : IRequestHandler<AddUserToProjectCommand>
+    : IRequestHandler<AddUserToProjectCommand, Result<string>>
 {
-    public async Task Handle(AddUserToProjectCommand request, CancellationToken cancellationToken)
+    public async Task<Result<string>> Handle(AddUserToProjectCommand request, CancellationToken cancellationToken)
     {
-        var existingProjectMember = await projectRepository.IsUserInProjectAsync(request.ProjectId, request.UserId);
+        var userId = await projectRepository.GetUserIdByEmailAsync(request.Email);
+
+        if (userId == Guid.Empty)
+        {
+            return Result<string>.Failure("User with provided email does not exist.");
+        }
+        
+        var existingProjectMember = await projectRepository.IsUserInProjectAsync(request.ProjectId, userId);
         
         if (existingProjectMember)
         {
-            return;
+            return Result<string>.Failure("User is already a member of the project.");
         }
         
-        var roleId = await roleRepository.GetRoleIdByNameAsync(RoleConstants.User);
+        var roleId = await roleRepository.GetRoleIdByNameAsync(request.Role);
+
+        if (roleId == Guid.Empty)
+        {
+            return Result<string>.Failure("Role does not exist.");
+        }
         
-        await projectRepository.AddUserToProjectAsync(request.ProjectId, request.UserId, roleId);
+        await projectRepository.AddUserToProjectAsync(request.ProjectId, userId, roleId);
+        return Result<string>.Success("User added to project successfully.");
     }
 }
