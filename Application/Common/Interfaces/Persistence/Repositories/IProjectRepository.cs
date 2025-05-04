@@ -36,4 +36,13 @@ public interface IProjectRepository : IGenericRepository<Project, Guid>
     Task RestoreAsync(Guid projectId);
     
     Task DeleteArchivedOlderThanAsync(TimeSpan ageThreshold);
+    
+    Task<(IEnumerable<ProjectMemberModel>, int)> GetProjectMembers(
+        Guid projectId,
+        PaginationParameters paginationParameters
+    );
+
+    Task<Guid> GetUserIdByEmailAsync(string email);
+    
+    Task UpdateUserRoleAsync(Guid projectId, Guid userId, Guid roleId);
 }

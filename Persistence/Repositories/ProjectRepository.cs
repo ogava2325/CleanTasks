@@ -268,7 +268,7 @@ public class ProjectRepository(IDbConnectionFactory dbConnectionFactory)
                                AND UserId = @UserId
                              """;
 
-        await connection.ExecuteAsync(query, new { ProkectId = projectId, UserId = userId });
+        await connection.ExecuteAsync(query, new { ProjectId = projectId, UserId = userId });
     }
 
     public async Task ArchiveAsync(Guid projectId)
@@ -280,8 +280,6 @@ public class ProjectRepository(IDbConnectionFactory dbConnectionFactory)
                              SET IsArchived = 1,
                                  LastModifiedAtUtc = @LastModifiedAtUtc,
                                  ArchivedAt = @ArchivedAt
-                             
-
                              WHERE Id = @ProjectId
                              """;
 
@@ -328,5 +326,79 @@ public class ProjectRepository(IDbConnectionFactory dbConnectionFactory)
                              """;
 
         await connection.ExecuteAsync(query, new { ThresholdDate = thresholdDate });
+    }
+
+    public async Task<(IEnumerable<ProjectMemberModel>, int)> GetProjectMembers(Guid projectId, PaginationParameters paginationParameters)
+    {
+        using var connection = _dbConnectionFactory.CreateConnection();
+        
+        const string countQuery = """
+                                   SELECT COUNT(*)
+                                   FROM Users u
+                                   INNER JOIN Users_Projects up ON u.Id = up.UserId
+                                   WHERE up.ProjectId = @ProjectId
+                                   """;
+
+        const string dataQuery = """
+                                 SELECT
+                                     u.Id,
+                                     u.Email,
+                                     r.Name AS Role
+                                 FROM Users u
+                                 INNER JOIN Users_Projects up ON u.Id = up.UserId
+                                 INNER JOIN Roles r ON up.RoleId = r.Id
+                                 WHERE up.ProjectId = @ProjectId
+                                   AND (@SearchTerm IS NULL OR u.Email LIKE @SearchTerm)
+                                 ORDER BY (SELECT NULL)
+                                 OFFSET @Offset ROWS
+                                 FETCH NEXT @PageSize ROWS ONLY
+                                 """;
+
+        var parameters = new
+        {
+            ProjectId = projectId,
+            Offset = (paginationParameters.PageNumber - 1) * paginationParameters.PageSize,
+            PageSize = paginationParameters.PageSize,
+            SearchTerm = string.IsNullOrWhiteSpace(paginationParameters.SearchTerm)
+                ? null
+                : $"%{paginationParameters.SearchTerm}%"
+        };
+
+
+        var users = await connection.QueryAsync<ProjectMemberModel>(dataQuery, parameters);
+        var count = await connection.ExecuteScalarAsync<int>(countQuery, new { ProjectId = projectId });
+
+        return (users, count);
+    }
+
+    public async Task<Guid> GetUserIdByEmailAsync(string email)
+    {
+        using var connection = _dbConnectionFactory.CreateConnection();
+        
+        const string query = """
+                             SELECT Id
+                             FROM Users
+                             WHERE Email = @Email
+                             """;
+
+        return await connection.QuerySingleOrDefaultAsync<Guid>(query, new { Email = email });
+    }
+
+    public async Task UpdateUserRoleAsync(Guid projectId, Guid userId, Guid roleId)
+    {
+        var connection = _dbConnectionFactory.CreateConnection();
+        
+        const string sql = @"
+            UPDATE Users_Projects
+               SET RoleId = @RoleId
+             WHERE ProjectId = @ProjectId
+               AND UserId    = @UserId;
+        ";
+        
+        await connection.ExecuteAsync(sql, new {
+            ProjectId = projectId,
+            UserId    = userId,
+            RoleId = roleId
+        });
     }
 }
